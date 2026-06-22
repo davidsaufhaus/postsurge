@@ -1,23 +1,40 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { loginAction } from "./actions";
 
 export function LoginForm() {
   const router = useRouter();
-  const [result, formAction, pending] = useActionState(loginAction, undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (result === "ok") {
-      router.push("/");
-      router.refresh();
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const res = await signIn("credentials", {
+      email: formData.get("email"),
+      password: formData.get("password"),
+      redirect: false,
+    });
+
+    setPending(false);
+
+    if (!res || res.error) {
+      setError("Login fehlgeschlagen: E-Mail oder Passwort falsch.");
+      return;
     }
-  }, [result, router]);
+
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <form
-      action={formAction}
+      onSubmit={handleSubmit}
       className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-black/5 bg-white p-6 shadow-sm"
     >
       <div className="flex flex-col gap-1">
@@ -44,9 +61,7 @@ export function LoginForm() {
           className="rounded-lg border border-black/10 bg-[#f5f5f7] px-3 py-2.5 text-sm outline-none transition-shadow focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30"
         />
       </div>
-      {result && result !== "ok" && (
-        <p className="text-sm text-red-600">{result}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={pending}

@@ -1,5 +1,6 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const roleHome: Record<string, string> = {
   PATIENT: "/patient",
@@ -8,14 +9,16 @@ const roleHome: Record<string, string> = {
   ADMIN: "/admin",
 };
 
-export default auth((req) => {
+export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
-  const role = req.auth?.user?.role;
 
   if (nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
+
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const isLoggedIn = !!token;
+  const role = token?.role as string | undefined;
 
   const isLandingOrAuth = nextUrl.pathname === "/login" || nextUrl.pathname === "/";
 
@@ -45,7 +48,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

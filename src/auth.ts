@@ -1,20 +1,23 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
+import type { NextAuthOptions } from "next-auth";
+import { getServerSession } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
-    Credentials({
+    CredentialsProvider({
+      name: "credentials",
       credentials: {
-        email: {},
-        password: {},
+        email: { label: "E-Mail", type: "email" },
+        password: { label: "Passwort", type: "password" },
       },
       authorize: async (credentials) => {
-        const email = credentials?.email as string | undefined;
-        const password = credentials?.password as string | undefined;
+        const email = credentials?.email;
+        const password = credentials?.password;
         if (!email || !password) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
@@ -48,4 +51,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-});
+};
+
+export async function auth() {
+  return getServerSession(authOptions);
+}

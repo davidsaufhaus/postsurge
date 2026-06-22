@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useRef, useState, useTransition } from "react";
 import { createMedication } from "./actions";
 
 const inputClass =
@@ -9,17 +9,22 @@ const inputClass =
 const DARREICHUNGSFORMEN = ["Tablette", "Kapsel", "Saft", "Tropfen", "Salbe", "Injektion", "Zäpfchen"];
 
 export function MedicationForm() {
-  const [result, formAction, pending] = useActionState(createMedication, undefined);
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<string | undefined>();
   const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    if (result === "ok") formRef.current?.reset();
-  }, [result]);
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await createMedication(undefined, formData);
+      setResult(res);
+      if (res === "ok") formRef.current?.reset();
+    });
+  }
 
   return (
     <form
       ref={formRef}
-      action={formAction}
+      action={handleSubmit}
       className="flex flex-wrap items-end gap-3 rounded-2xl border border-black/5 bg-white p-6 shadow-sm"
     >
       <div className="flex flex-col gap-1">

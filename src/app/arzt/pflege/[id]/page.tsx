@@ -4,8 +4,8 @@ import { MedicationChecklistItem } from "./medication-checklist";
 import { ExerciseChecklistItem } from "./exercise-checklist";
 import { MeldungForm } from "./meldung-form";
 
-export default async function PflegePatientPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function PflegePatientPage({ params }: { params: { id: string } }) {
+  const { id } = params;
 
   const patient = await prisma.patient.findUnique({
     where: { id },
