@@ -1,0 +1,65 @@
+"use server";
+
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+async function requirePatient() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "PATIENT") {
+    throw new Error("Nicht autorisiert");
+  }
+  const patient = await prisma.patient.findUnique({ where: { userId: session.user.id } });
+  if (!patient) throw new Error("Kein Patientenprofil gefunden");
+  return patient;
+}
+
+export async function toggleTodo(todoId: string, done: boolean) {
+  const patient = await requirePatient();
+  await prisma.patientTodo.updateMany({
+    where: { id: todoId, patientId: patient.id },
+    data: { done },
+  });
+  revalidatePath("/patient");
+}
+
+export async function toggleExercise(exerciseId: string, done: boolean) {
+  const patient = await requirePatient();
+  await prisma.patientExercise.updateMany({
+    where: { id: exerciseId, patientId: patient.id },
+    data: { status: done ? "ERLEDIGT" : "OFFEN", erledigtAm: done ? new Date() : null },
+  });
+  revalidatePath("/patient/genesungsplan");
+}
+
+// Microflow 1: intelligenter Speichern-Button - berechnet PrioFlag und speichert das Check-in
+export async function submitCheckIn(formData: FormData) {
+  const patient = await requirePatient();
+
+  const schmerzlevel = Number(formData.get("schmerzlevel"));
+  const fieber = formData.get("fieber") === "on";
+  const medsGenommen = formData.get("medsGenommen") === "on";
+  const fotoDataUrl = formData.get("fotoDataUrl") as string | null;
+
+  const prioFlag = fieber || schmerzlevel > 5 ? "HOCH" : "NORMAL";
+
+  const checkIn = await prisma.checkIn.create({
+    data: {
+      patientId: patient.id,
+      schmerzlevel,
+      fieber,
+      medsGenommen,
+      prioFlag,
+      arztStatus: "UNGELESEN",
+    },
+  });
+
+  if (fotoDataUrl) {
+    await prisma.wundFoto.create({
+      data: { checkInId: checkIn.id, dataUrl: fotoDataUrl },
+    });
+  }
+
+  revalidatePath("/patient");
+  return { success: true };
+}

@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite hat keine nativen Enums in Prisma - als String-Konstanten dokumentiert:
+// Role: PATIENT | DOCTOR | NURSE | ADMIN
+// DischargeStatus: IN_VORBEREITUNG | BEREIT | ENTLASSEN
+// ArztStatus: UNGELESEN | ERLEDIGT | EINBESTELLEN | RUECKRUF_ANGEFORDERT
+// PrioFlag: NORMAL | HOCH
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String // PATIENT | DOCTOR | NURSE | ADMIN
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  patient Patient?
+  arzt    Arzt?
+
+  auditLogs AuditLog[] @relation("AuditLogActor")
+}
+
+model Patient {
+  id               String          @id @default(cuid())
+  user             User            @relation(fields: [userId], references: [id])
+  userId           String          @unique
+  name             String
+  opDatum          DateTime
+  opArt            String
+  entlassungsstatus String  @default("IN_VORBEREITUNG") // IN_VORBEREITUNG | BEREIT | ENTLASSEN
+  naechsterTermin  DateTime?
+  postOpPfad       String?
+  zusammenfassung  String?
+
+  betreuendArzt   Arzt?   @relation(fields: [betreuendArztId], references: [id])
+  betreuendArztId String?
+
+  clearanceCheck ClearanceCheck?
+  checkIns       CheckIn[]
+  todos          PatientTodo[]
+  medications    PatientMedication[]
+  exercises      PatientExercise[]
+  documents      Document[]
+  termine        Termin[]
+  massnahmen     PflegeMassnahme[]
+  meldungen      PflegeMeldung[]
+
+  createdAt DateTime @default(now())
+}
+
+model Arzt {
+  id             String @id @default(cuid())
+  user           User   @relation(fields: [userId], references: [id])
+  userId         String @unique
+  name           String
+  fachabteilung  String
+  telefonnummer  String @default("")
+
+  patienten   Patient[]
+  checkIns    CheckIn[] @relation("ArztSichtung")
+  auditLogs   AuditLog[] @relation("AuditLogArzt")
+  massnahmen  PflegeMassnahme[]
+  meldungen   PflegeMeldung[]
+}
+
+model ClearanceCheck {
+  id                   String  @id @default(cuid())
+  patient              Patient @relation(fields: [patientId], references: [id])
+  patientId            String  @unique
+  arztbriefFertig      Boolean @default(false)
+  abschlussuntersuchung Boolean @default(false)
+  nachsorgePlanZugeordnet Boolean @default(false)
+  freigabeErteilt      Boolean @default(false)
+  updatedAt            DateTime @updatedAt
+}
+
+model PatientTodo {
+  id        String  @id @default(cuid())
+  patient   Patient @relation(fields: [patientId], references: [id])
+  patientId String
+  label     String
+  done      Boolean @default(false)
+}
+
+model PatientMedication {
+  id         String     @id @default(cuid())
+  patient    Patient    @relation(fields: [patientId], references: [id])
+  patientId  String
+  medication Medication @relation(fields: [medicationId], references: [id])
+  medicationId String
+  dosage     String
+  frequency  String
+  einnahmezeit String @default("")
+  hinweis    String?
+  geaendert  Boolean @default(false)
+
+  massnahmen PflegeMassnahme[]
+}
+
+model Medication {
+  id       String  @id @default(cuid())
+  name     String
+  wirkstoff String @default("")
+  strength String
+  form     String
+  code     String  @unique
+  active   Boolean @default(true)
+
+  patientMedications PatientMedication[]
+}
+
+model CheckIn {
+  id            String     @id @default(cuid())
+  patient       Patient    @relation(fields: [patientId], references: [id])
+  patientId     String
+  datum         DateTime   @default(now())
+  schmerzlevel  Int
+  fieber        Boolean
+  medsGenommen  Boolean
+  prioFlag      String     @default("NORMAL") // NORMAL | HOCH
+  arztStatus    String     @default("UNGELESEN") // UNGELESEN | ERLEDIGT | EINBESTELLEN | RUECKRUF_ANGEFORDERT
+  wundFoto      WundFoto?
+
+  gesichtetVon   Arzt?   @relation("ArztSichtung", fields: [gesichtetVonId], references: [id])
+  gesichtetVonId String?
+  gesichtetAm    DateTime?
+
+  auditLogs AuditLog[]
+}
+
+model WundFoto {
+  id         String  @id @default(cuid())
+  checkIn    CheckIn @relation(fields: [checkInId], references: [id])
+  checkInId  String  @unique
+  dataUrl    String
+  createdAt  DateTime @default(now())
+}
+
+model RecoveryPlanTemplate {
+  id    String @id @default(cuid())
+  name  String
+  opArt String
+
+  exercises ExerciseTemplate[]
+}
+
+model ExerciseTemplate {
+  id            String               @id @default(cuid())
+  template      RecoveryPlanTemplate @relation(fields: [templateId], references: [id])
+  templateId    String
+  name          String
+  anweisung     String
+  wiederholungen String
+  frequenz      String
+}
+
+// Kopie einer ExerciseTemplate, die dem Patienten individuell zugewiesen ist
+model PatientExercise {
+  id            String    @id @default(cuid())
+  patient       Patient   @relation(fields: [patientId], references: [id])
+  patientId     String
+  name          String
+  anweisung     String
+  wiederholungen String
+  frequenz      String
+  status        String    @default("OFFEN") // OFFEN | ERLEDIGT
+  erledigtAm    DateTime?
+
+  massnahmen PflegeMassnahme[]
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  patientId   String
+  title       String
+  category    String // ENTLASSUNGSBRIEF | BEFUND | AU_BESCHEINIGUNG | UEBERWEISUNG | AUFKLAERUNG | REZEPT | SONSTIGES
+  abteilung   String? // für Befunde: behandelnde Abteilung
+  gueltigVon  DateTime? // für AU-Bescheinigung
+  gueltigBis  DateTime? // für AU-Bescheinigung
+  fachrichtung String? // für Überweisungen
+  begruendung String? // für Überweisungen
+  dataUrl     String?
+  createdAt   DateTime @default(now())
+}
+
+// Epic 3 / US6: Nachsorgetermine mit Ort, getrennt vom einfachen naechsterTermin-Feld
+model Termin {
+  id        String   @id @default(cuid())
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  patientId String
+  titel     String
+  datum     DateTime
+  ort       String
+  createdAt DateTime @default(now())
+}
+
+// Dokumentation einer durchgeführten Maßnahme (Medikamentengabe oder Übung) durch die Pflege
+model PflegeMassnahme {
+  id                String           @id @default(cuid())
+  patient           Patient          @relation(fields: [patientId], references: [id])
+  patientId         String
+  arzt              Arzt             @relation(fields: [arztId], references: [id])
+  arztId            String
+  typ               String // MEDIKATION | UEBUNG
+  patientMedication  PatientMedication? @relation(fields: [patientMedicationId], references: [id])
+  patientMedicationId String?
+  patientExercise    PatientExercise?   @relation(fields: [patientExerciseId], references: [id])
+  patientExerciseId  String?
+  kommentar         String?
+  durchgefuehrtAm   DateTime         @default(now())
+}
+
+// Meldung der Pflege an das Ärzteteam bei Auffälligkeiten
+model PflegeMeldung {
+  id            String   @id @default(cuid())
+  patient       Patient  @relation(fields: [patientId], references: [id])
+  patientId     String
+  arzt          Arzt     @relation(fields: [arztId], references: [id])
+  arztId        String
+  dringlichkeit Int // 1 = niedrig, 2 = mittel, 3 = hoch
+  kommentar     String
+  createdAt     DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  checkIn   CheckIn  @relation(fields: [checkInId], references: [id])
+  checkInId String
+  arzt      Arzt     @relation("AuditLogArzt", fields: [arztId], references: [id])
+  arztId    String
+  actor     User     @relation("AuditLogActor", fields: [actorUserId], references: [id])
+  actorUserId String
+  action    String
+  createdAt DateTime @default(now())
+}
