@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 const roleHome: Record<string, string> = {
   PATIENT: "/patient",
   DOCTOR: "/arzt",
-  NURSE: "/arzt",
+  NURSE: "/arzt/pflege",
   ADMIN: "/admin",
 };
 

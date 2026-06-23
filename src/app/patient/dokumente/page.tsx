@@ -61,7 +61,27 @@ export default async function DokumentePage() {
                       </p>
                     )}
                   </div>
-                  <span className="text-xl">📄</span>
+                  {doc.dataUrl ? (
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={doc.dataUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-[#0071e3] hover:underline"
+                      >
+                        Ansehen
+                      </a>
+                      <a
+                        href={doc.dataUrl}
+                        download={doc.title}
+                        className="rounded-full bg-[#0071e3]/10 px-3 py-1.5 text-sm font-medium text-[#0071e3] transition-colors hover:bg-[#0071e3]/20"
+                      >
+                        Herunterladen
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-xl">📄</span>
+                  )}
                 </li>
               ))}
             </ul>

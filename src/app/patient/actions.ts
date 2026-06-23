@@ -60,6 +60,10 @@ export async function submitCheckIn(formData: FormData) {
     });
   }
 
+  if (patient.checkinAngefordert) {
+    await prisma.patient.update({ where: { id: patient.id }, data: { checkinAngefordert: false } });
+  }
+
   revalidatePath("/patient");
   return { success: true };
 }

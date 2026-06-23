@@ -21,8 +21,12 @@ export default async function ArztLayout({ children }: { children: React.ReactNo
             </div>
           </div>
           <nav className="flex items-center gap-1">
-            <NavLink href="/arzt">Dashboard</NavLink>
-            <NavLink href="/arzt/clearance">Entlassungs-Clearance</NavLink>
+            {session?.user?.role === "DOCTOR" && (
+              <>
+                <NavLink href="/arzt">Dashboard</NavLink>
+                <NavLink href="/arzt/clearance">Entlassungs-Clearance</NavLink>
+              </>
+            )}
             <NavLink href="/arzt/pflege">Pflege-Dashboard</NavLink>
           </nav>
         </div>

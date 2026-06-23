@@ -9,6 +9,19 @@ export default async function PflegeUebersichtPage() {
     },
   });
 
+  const offeneAnfragen = await prisma.checkIn.groupBy({
+    by: ["patientId", "arztStatus"],
+    where: { arztStatus: { in: ["RUECKRUF_ANGEFORDERT", "EINBESTELLEN"] } },
+    _count: true,
+  });
+
+  function anfrageFor(patientId: string) {
+    const treffer = offeneAnfragen.filter((a) => a.patientId === patientId);
+    if (treffer.some((a) => a.arztStatus === "EINBESTELLEN")) return "EINBESTELLEN";
+    if (treffer.some((a) => a.arztStatus === "RUECKRUF_ANGEFORDERT")) return "RUECKRUF_ANGEFORDERT";
+    return null;
+  }
+
   return (
     <div className="mx-auto max-w-3xl flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight text-[#1d1d1f]">Pflege-Dashboard</h1>
@@ -18,6 +31,7 @@ export default async function PflegeUebersichtPage() {
       <div className="flex flex-col gap-3">
         {patients.map((p) => {
           const latest = p.checkIns[0];
+          const anfrage = anfrageFor(p.id);
           return (
             <Link
               key={p.id}
@@ -29,6 +43,17 @@ export default async function PflegeUebersichtPage() {
                 <p className="text-sm text-[#86868b]">
                   {p.opArt} &middot; Status: {p.entlassungsstatus}
                 </p>
+                {anfrage && (
+                  <span
+                    className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                      anfrage === "EINBESTELLEN"
+                        ? "bg-[#ff3b30]/10 text-[#ff3b30]"
+                        : "bg-[#ff9500]/10 text-[#ff9500]"
+                    }`}
+                  >
+                    {anfrage === "EINBESTELLEN" ? "Patient einbestellen" : "Rückruf anfordern"}
+                  </span>
+                )}
               </div>
               {latest && (
                 <div className="text-right text-sm">

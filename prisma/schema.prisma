@@ -39,6 +39,7 @@ model Patient {
   naechsterTermin  DateTime?
   postOpPfad       String?
   zusammenfassung  String?
+  checkinAngefordert Boolean @default(false)
 
   betreuendArzt   Arzt?   @relation(fields: [betreuendArztId], references: [id])
   betreuendArztId String?
@@ -228,6 +229,7 @@ model PflegeMeldung {
   arztId        String
   dringlichkeit Int // 1 = niedrig, 2 = mittel, 3 = hoch
   kommentar     String
+  gelesen       Boolean  @default(false)
   createdAt     DateTime @default(now())
 }
 

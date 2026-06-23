@@ -14,6 +14,17 @@ async function requireArzt() {
   return { arzt, userId: session.user.id };
 }
 
+// Entlassungsclearance darf ausschließlich vom Arzt durchgeführt werden, nicht von der Pflege
+async function requireDoctor() {
+  const session = await auth();
+  if (!session?.user || session.user.role !== "DOCTOR") {
+    throw new Error("Nicht autorisiert: Nur Ärzte dürfen die Entlassungsclearance bearbeiten.");
+  }
+  const arzt = await prisma.arzt.findUnique({ where: { userId: session.user.id } });
+  if (!arzt) throw new Error("Kein Arztprofil gefunden");
+  return { arzt, userId: session.user.id };
+}
+
 // Microflow 2: Arzt-Entscheidung - setzt Status, schreibt Audit-Log
 async function decide(checkInId: string, arztStatus: string, action: string) {
   const { arzt, userId } = await requireArzt();
@@ -45,14 +56,22 @@ export async function markGesehen(checkInId: string) {
 
 export async function requestRueckruf(checkInId: string) {
   await decide(checkInId, "RUECKRUF_ANGEFORDERT", "Pflege-Rückruf angefordert");
+  revalidatePath("/arzt/pflege");
 }
 
 export async function requestEinbestellen(checkInId: string) {
   await decide(checkInId, "EINBESTELLEN", "Patient einbestellt");
+  revalidatePath("/arzt/pflege");
+}
+
+// Pflege markiert eine angeforderte Rückruf-/Einbestellungs-Aufgabe als erledigt
+export async function resolveCheckInRequest(checkInId: string) {
+  await decide(checkInId, "ERLEDIGT", "Pflege-Aufgabe erledigt");
+  revalidatePath("/arzt/pflege");
 }
 
 export async function updateClearance(patientId: string, formData: FormData) {
-  await requireArzt();
+  await requireDoctor();
 
   const arztbriefFertig = formData.get("arztbriefFertig") === "on";
   const abschlussuntersuchung = formData.get("abschlussuntersuchung") === "on";
@@ -83,7 +102,7 @@ export async function updateClearance(patientId: string, formData: FormData) {
 
 // FA-3.3: Zuweisung kopiert die Vorlage, damit individuelle Anpassungen die globale Vorlage nicht verändern
 export async function assignTemplate(patientId: string, templateId: string) {
-  await requireArzt();
+  await requireDoctor();
 
   if (!templateId) {
     await prisma.patient.update({ where: { id: patientId }, data: { postOpPfad: null } });
@@ -115,7 +134,7 @@ export async function assignTemplate(patientId: string, templateId: string) {
 }
 
 export async function entlassen(patientId: string, naechsterTermin: string) {
-  await requireArzt();
+  await requireDoctor();
   await prisma.patient.update({
     where: { id: patientId },
     data: {

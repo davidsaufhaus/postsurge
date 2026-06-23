@@ -1,0 +1,112 @@
+"use client";
+
+import { useRef, useState, useTransition } from "react";
+import { addPatientMedication, removePatientMedication } from "../actions";
+import type { Medication, PatientMedication } from "@prisma/client";
+
+const inputClass =
+  "rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none transition-shadow focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30";
+
+export function MedicationManageForm({
+  patientId,
+  catalog,
+  assigned,
+}: {
+  patientId: string;
+  catalog: Medication[];
+  assigned: (PatientMedication & { medication: Medication })[];
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const res = await addPatientMedication(patientId, formData);
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
+      setError(null);
+      formRef.current?.reset();
+    });
+  }
+
+  function handleRemove(id: string) {
+    startTransition(async () => {
+      await removePatientMedication(patientId, id);
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl bg-[#f5f5f7] p-4">
+      <p className="text-xs font-medium text-[#86868b]">Aktuell zugewiesen</p>
+      {assigned.length === 0 && <p className="text-sm text-[#86868b]">Keine Medikamente zugewiesen.</p>}
+      <ul className="flex flex-col gap-2">
+        {assigned.map((m) => (
+          <li
+            key={m.id}
+            className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm"
+          >
+            <div>
+              <span className="font-medium text-[#1d1d1f]">
+                {m.medication.name} {m.medication.strength}
+              </span>{" "}
+              <span className="text-[#86868b]">
+                &middot; {m.dosage} &middot; {m.frequency}
+                {m.einnahmezeit && ` · ${m.einnahmezeit}`}
+              </span>
+            </div>
+            <button
+              onClick={() => handleRemove(m.id)}
+              disabled={pending}
+              className="text-xs font-medium text-[#ff3b30] hover:underline disabled:opacity-60"
+            >
+              Entfernen
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <form ref={formRef} action={handleSubmit} className="flex flex-wrap items-end gap-2 pt-2">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-[#86868b]">Medikament</label>
+          <select name="medicationId" required defaultValue="" className={inputClass}>
+            <option value="" disabled>
+              Bitte wählen…
+            </option>
+            {catalog.map((med) => (
+              <option key={med.id} value={med.id}>
+                {med.name} {med.strength}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-[#86868b]">Dosierung</label>
+          <input name="dosage" required placeholder="z.B. 1 Tablette" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-[#86868b]">Häufigkeit</label>
+          <input name="frequency" required placeholder="z.B. 2x täglich" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-[#86868b]">Einnahmezeit</label>
+          <input name="einnahmezeit" placeholder="z.B. morgens/abends" className={inputClass} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-[#86868b]">Hinweis</label>
+          <input name="hinweis" placeholder="optional" className={inputClass} />
+        </div>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-full bg-[#0071e3] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0058b9] disabled:opacity-60"
+        >
+          {pending ? "Speichert…" : "Medikament zuweisen"}
+        </button>
+      </form>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
+  );
+}

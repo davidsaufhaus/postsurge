@@ -1,7 +1,14 @@
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import { ClearanceRow } from "./clearance-row";
 
 export default async function ClearancePage() {
+  const session = await auth();
+  if (session?.user?.role !== "DOCTOR") {
+    redirect("/arzt");
+  }
+
   const [patients, templates] = await Promise.all([
     prisma.patient.findMany({
       where: { entlassungsstatus: { in: ["IN_VORBEREITUNG", "BEREIT"] } },
