@@ -8,27 +8,29 @@ export default async function ArztLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-white/80 px-6 py-3.5 backdrop-blur-md">
-        <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-10 border-b border-black/5 bg-white/80 backdrop-blur-md">
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2.5">
             <PostSurgeLogo size="sm" />
-            <p className="text-xs leading-tight text-[#86868b]">
+            <p className="hidden text-xs text-[#86868b] sm:block">
               {session?.user?.role === "NURSE" ? "Pflegeansicht" : "Arztansicht"} &middot; {session?.user?.name}
             </p>
           </div>
-          <nav className="flex items-center gap-1">
-            {session?.user?.role === "DOCTOR" && (
-              <>
-                <NavLink href="/arzt">Dashboard</NavLink>
-                <NavLink href="/arzt/clearance">Entlassungs-Clearance</NavLink>
-              </>
-            )}
-            <NavLink href="/arzt/pflege">Pflege-Dashboard</NavLink>
-          </nav>
+          <LogoutButton />
         </div>
-        <LogoutButton />
+        {/* Scrollbare Nav */}
+        <nav className="flex items-center gap-1 overflow-x-auto px-3 pb-2 [&::-webkit-scrollbar]:hidden">
+          {session?.user?.role === "DOCTOR" && (
+            <>
+              <NavLink href="/arzt">Dashboard</NavLink>
+              <NavLink href="/arzt/clearance">Entlassungs-Clearance</NavLink>
+            </>
+          )}
+          <NavLink href="/arzt/pflege">Pflege-Dashboard</NavLink>
+        </nav>
       </header>
-      <main className="flex-1 bg-[#f5f5f7] p-6">{children}</main>
+      <main className="flex-1 bg-[#f5f5f7] p-3 sm:p-6">{children}</main>
     </div>
   );
 }

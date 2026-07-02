@@ -5,7 +5,7 @@ import { addPatientMedication, removePatientMedication } from "../actions";
 import type { Medication, PatientMedication } from "@prisma/client";
 
 const inputClass =
-  "rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none transition-shadow focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30";
+  "w-full rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none transition-shadow focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 sm:w-auto";
 
 export function MedicationManageForm({
   patientId,
@@ -80,7 +80,7 @@ export function MedicationManageForm({
       ) : (
         <form ref={formRef} action={handleSubmit} className="flex flex-col gap-3 rounded-xl border border-[#0071e3]/20 bg-white p-4">
           <p className="text-xs font-semibold text-[#1d1d1f]">Neues Medikament zuweisen</p>
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-[#86868b]">Medikament</label>
               <select name="medicationId" required defaultValue="" className={inputClass}>

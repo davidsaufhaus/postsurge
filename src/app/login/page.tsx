@@ -3,7 +3,7 @@ import { PostSurgeLogo } from "@/components/logo";
 
 export default function LoginPage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-[radial-gradient(circle_at_50%_0%,#ffffff,#f5f5f7_60%)] px-6">
+    <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-[radial-gradient(circle_at_50%_0%,#ffffff,#f5f5f7_60%)] px-4 py-8 sm:px-6">
       <PostSurgeLogo size="lg" />
       <p className="text-sm text-[#86868b]">Digitale Nachsorge nach der Operation</p>
       <LoginForm />
