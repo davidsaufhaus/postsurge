@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "./login-form";
 import { PostSurgeLogo } from "@/components/logo";
 
@@ -14,6 +15,12 @@ export default function LoginPage() {
         <p>Pflege: pflege@postsurge.de / demo1234</p>
         <p>Admin: admin@postsurge.de / demo1234</p>
       </div>
+      <nav className="flex gap-4 text-xs text-[#86868b]">
+        <Link href="/hilfe" className="hover:text-[#1d1d1f] hover:underline">Hilfe</Link>
+        <Link href="/impressum" className="hover:text-[#1d1d1f] hover:underline">Impressum</Link>
+        <Link href="/datenschutz" className="hover:text-[#1d1d1f] hover:underline">Datenschutz</Link>
+        <Link href="/support" className="hover:text-[#1d1d1f] hover:underline">Support</Link>
+      </nav>
     </main>
   );
 }

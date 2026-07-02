@@ -20,12 +20,19 @@ export async function middleware(req: NextRequest) {
   const isLoggedIn = !!token;
   const role = token?.role as string | undefined;
 
-  const isLandingOrAuth = nextUrl.pathname === "/login" || nextUrl.pathname === "/";
+  const isPublic =
+    nextUrl.pathname === "/" ||
+    nextUrl.pathname === "/login" ||
+    nextUrl.pathname === "/impressum" ||
+    nextUrl.pathname === "/datenschutz" ||
+    nextUrl.pathname === "/hilfe" ||
+    nextUrl.pathname === "/support";
 
-  if (!isLoggedIn && !isLandingOrAuth) {
+  if (!isLoggedIn && !isPublic) {
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
+  const isLandingOrAuth = nextUrl.pathname === "/login" || nextUrl.pathname === "/";
   if (isLoggedIn && isLandingOrAuth) {
     return NextResponse.redirect(new URL(roleHome[role ?? ""] ?? "/", nextUrl));
   }
