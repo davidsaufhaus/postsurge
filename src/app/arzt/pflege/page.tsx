@@ -1,6 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
+const STATUS_STYLE: Record<string, string> = {
+  IN_VORBEREITUNG: "bg-[#86868b]/10 text-[#86868b]",
+  BEREIT: "bg-[#ff9500]/10 text-[#ff9500]",
+  ENTLASSEN: "bg-[#34c759]/10 text-[#34c759]",
+};
+const STATUS_LABEL: Record<string, string> = {
+  IN_VORBEREITUNG: "In Vorbereitung",
+  BEREIT: "Bereit",
+  ENTLASSEN: "Entlassen",
+};
+
 export default async function PflegeUebersichtPage() {
   const patients = await prisma.patient.findMany({
     orderBy: { name: "asc" },
@@ -41,7 +52,10 @@ export default async function PflegeUebersichtPage() {
               <div>
                 <p className="font-medium text-[#1d1d1f]">{p.name}</p>
                 <p className="text-sm text-[#86868b]">
-                  {p.opArt} &middot; Status: {p.entlassungsstatus}
+                  {p.opArt} &middot;{" "}
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[p.entlassungsstatus] ?? "bg-[#86868b]/10 text-[#86868b]"}`}>
+                    {STATUS_LABEL[p.entlassungsstatus] ?? p.entlassungsstatus}
+                  </span>
                 </p>
                 {anfrage && (
                   <span

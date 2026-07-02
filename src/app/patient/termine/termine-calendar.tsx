@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AddToCalendarButton } from "./add-to-calendar";
+import { cancelTermin, rescheduleTermin } from "../actions";
 
 type CalendarEvent = {
   id: string;
@@ -15,6 +16,66 @@ const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function TerminActions({ event }: { event: CalendarEvent }) {
+  const [pending, startTransition] = useTransition();
+  const [rescheduling, setRescheduling] = useState(false);
+  const [newDate, setNewDate] = useState(event.datum.slice(0, 16));
+
+  if (event.typ === "kontrolle") return null;
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      {rescheduling ? (
+        <div className="flex items-center gap-2">
+          <input
+            type="datetime-local"
+            value={newDate}
+            onChange={(e) => setNewDate(e.target.value)}
+            className="rounded-lg border border-black/10 px-2 py-1 text-xs text-[#1d1d1f]"
+          />
+          <button
+            disabled={pending}
+            onClick={() =>
+              startTransition(async () => {
+                await rescheduleTermin(event.id, newDate);
+                setRescheduling(false);
+              })
+            }
+            className="rounded-full bg-[#0071e3]/10 px-3 py-1 text-xs font-medium text-[#0071e3] hover:bg-[#0071e3]/20 disabled:opacity-60"
+          >
+            {pending ? "…" : "Speichern"}
+          </button>
+          <button
+            onClick={() => setRescheduling(false)}
+            className="text-xs text-[#86868b] hover:underline"
+          >
+            Abbrechen
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setRescheduling(true)}
+            className="rounded-full bg-[#f5f5f7] px-3 py-1 text-xs font-medium text-[#1d1d1f] hover:bg-black/10"
+          >
+            Verschieben
+          </button>
+          <button
+            disabled={pending}
+            onClick={() => {
+              if (confirm("Termin wirklich absagen?"))
+                startTransition(() => cancelTermin(event.id));
+            }}
+            className="rounded-full bg-[#ff3b30]/10 px-3 py-1 text-xs font-medium text-[#ff3b30] hover:bg-[#ff3b30]/20 disabled:opacity-60"
+          >
+            {pending ? "…" : "Absagen"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function TermineCalendar({ events }: { events: CalendarEvent[] }) {
@@ -124,15 +185,18 @@ export function TermineCalendar({ events }: { events: CalendarEvent[] }) {
         {selectedEvents.length > 0 && (
           <ul className="flex flex-col gap-3">
             {selectedEvents.map((e) => (
-              <li key={e.id} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-[#1d1d1f]">{e.titel}</p>
-                  <p className="text-sm text-[#86868b]">
-                    {new Date(e.datum).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })}
-                    {e.ort && ` · ${e.ort}`}
-                  </p>
+              <li key={e.id} className="flex flex-col gap-2 rounded-xl bg-white p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-[#1d1d1f]">{e.titel}</p>
+                    <p className="text-sm text-[#86868b]">
+                      {new Date(e.datum).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })}
+                      {e.ort && ` · ${e.ort}`}
+                    </p>
+                  </div>
+                  <AddToCalendarButton titel={e.titel} datum={e.datum} ort={e.ort} />
                 </div>
-                <AddToCalendarButton titel={e.titel} datum={e.datum} ort={e.ort} />
+                <TerminActions event={e} />
               </li>
             ))}
           </ul>

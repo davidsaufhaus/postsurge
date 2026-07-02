@@ -30,11 +30,14 @@ export function PreDischargeView({
         <h2 className="mb-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">Entlassungsstatus</h2>
         <div className="h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
           <div
-            className="h-full rounded-full bg-[#0071e3] transition-all duration-500 ease-out"
-            style={{ width: `${percent}%` }}
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{
+              width: `${percent}%`,
+              background: `linear-gradient(90deg, #ff9500, #34c759 ${percent}%)`,
+            }}
           />
         </div>
-        <p className="mt-3 text-sm text-[#86868b]">
+        <p className="mt-3 text-sm" style={{ color: percent >= 75 ? "#34c759" : percent >= 50 ? "#ff9500" : "#86868b" }}>
           Entlassung zu {percent}% vorbereitet
           {isReady ? " – Du bist bereit zur Entlassung!" : " – Warten auf Abschlussgespräch."}
         </p>

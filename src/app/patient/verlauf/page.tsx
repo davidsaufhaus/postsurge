@@ -26,24 +26,39 @@ export default async function VerlaufPage() {
 
       <section className="rounded-2xl border border-black/5 bg-white p-7 shadow-sm">
         <h1 className="mb-4 text-lg font-semibold tracking-tight text-[#1d1d1f]">
-          Verlauf &middot; Letzte Check-ins
+          Letzte Check-ins &amp; Schmerzskala
         </h1>
         {checkIns.length === 0 && (
           <p className="text-sm text-[#86868b]">Noch keine Check-ins erfasst.</p>
         )}
-        <div className="flex items-end gap-2" style={{ height: 140 }}>
-          {checkIns.map((c) => (
-            <div key={c.id} className="flex flex-1 flex-col items-center gap-1">
-              <div
-                className={`w-full rounded-t-md ${c.fieber ? "bg-[#ff3b30]" : "bg-[#0071e3]"}`}
-                style={{ height: `${(c.schmerzlevel / maxLevel) * 100}px` }}
-                title={`Schmerzlevel ${c.schmerzlevel}/10`}
-              />
-              <span className="text-[10px] text-[#86868b]">
-                {new Date(c.datum).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
-              </span>
+        <div className="flex gap-2">
+          {/* Y-Achse */}
+          <div className="flex flex-col justify-between pb-5 text-right" style={{ height: 160 }}>
+            {[10, 8, 6, 4, 2, 0].map((v) => (
+              <span key={v} className="text-[10px] leading-none text-[#86868b]">{v}</span>
+            ))}
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <div className="flex items-end gap-2" style={{ height: 140 }}>
+              {checkIns.map((c) => (
+                <div key={c.id} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className={`w-full rounded-t-md ${c.fieber ? "bg-[#ff3b30]" : "bg-[#0071e3]"}`}
+                    style={{ height: `${(c.schmerzlevel / maxLevel) * 100}%`, minHeight: 2 }}
+                    title={`Schmerzlevel ${c.schmerzlevel}/10`}
+                  />
+                  <span className="text-[10px] text-[#86868b]">
+                    {new Date(c.datum).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        </div>
+        <div className="mt-2 flex items-center gap-4 text-xs text-[#86868b]">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#0071e3]" /> Schmerz</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#ff3b30]" /> mit Fieber</span>
+          <span className="ml-auto">Achse: Schmerzlevel 0–10</span>
         </div>
         <ul className="mt-6 flex flex-col divide-y divide-black/5">
           {[...patient.checkIns].map((c) => (

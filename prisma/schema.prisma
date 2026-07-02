@@ -102,6 +102,7 @@ model PatientMedication {
   einnahmezeit String @default("")
   hinweis    String?
   geaendert  Boolean @default(false)
+  eingenommen Boolean @default(false)
 
   massnahmen PflegeMassnahme[]
 }

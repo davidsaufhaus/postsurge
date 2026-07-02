@@ -23,6 +23,30 @@ export async function toggleTodo(todoId: string, done: boolean) {
   revalidatePath("/patient");
 }
 
+export async function toggleMedication(medicationId: string, eingenommen: boolean) {
+  const patient = await requirePatient();
+  await prisma.patientMedication.updateMany({
+    where: { id: medicationId, patientId: patient.id },
+    data: { eingenommen },
+  });
+  revalidatePath("/patient/genesungsplan");
+}
+
+export async function cancelTermin(terminId: string) {
+  const patient = await requirePatient();
+  await prisma.termin.deleteMany({ where: { id: terminId, patientId: patient.id } });
+  revalidatePath("/patient/termine");
+}
+
+export async function rescheduleTermin(terminId: string, newDatum: string) {
+  const patient = await requirePatient();
+  await prisma.termin.updateMany({
+    where: { id: terminId, patientId: patient.id },
+    data: { datum: new Date(newDatum) },
+  });
+  revalidatePath("/patient/termine");
+}
+
 export async function toggleExercise(exerciseId: string, done: boolean) {
   const patient = await requirePatient();
   await prisma.patientExercise.updateMany({

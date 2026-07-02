@@ -1,5 +1,16 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+
+const STATUS_STYLE: Record<string, string> = {
+  IN_VORBEREITUNG: "bg-[#86868b]/10 text-[#86868b]",
+  BEREIT: "bg-[#ff9500]/10 text-[#ff9500]",
+  ENTLASSEN: "bg-[#34c759]/10 text-[#34c759]",
+};
+const STATUS_LABEL: Record<string, string> = {
+  IN_VORBEREITUNG: "In Vorbereitung",
+  BEREIT: "Bereit",
+  ENTLASSEN: "Entlassen",
+};
 import { notFound } from "next/navigation";
 import { MedicationChecklistItem } from "./medication-checklist";
 import { ExerciseChecklistItem } from "./exercise-checklist";
@@ -59,7 +70,10 @@ export default async function PflegePatientPage({ params }: { params: { id: stri
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-[#1d1d1f]">{patient.name}</h1>
           <p className="text-sm text-[#86868b]">
-            {patient.opArt} &middot; Status: {patient.entlassungsstatus}
+            {patient.opArt} &middot;{" "}
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[patient.entlassungsstatus] ?? "bg-[#86868b]/10 text-[#86868b]"}`}>
+              {STATUS_LABEL[patient.entlassungsstatus] ?? patient.entlassungsstatus}
+            </span>
           </p>
         </div>
         {isDoctor && (
