@@ -2,13 +2,13 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 const STATUS_STYLE: Record<string, string> = {
-  IN_VORBEREITUNG: "bg-[#86868b]/10 text-[#86868b]",
+  IN_VORBEREITUNG: "bg-[#0071e3]/10 text-[#0071e3]",
   BEREIT: "bg-[#ff9500]/10 text-[#ff9500]",
   ENTLASSEN: "bg-[#34c759]/10 text-[#34c759]",
 };
 const STATUS_LABEL: Record<string, string> = {
-  IN_VORBEREITUNG: "In Vorbereitung",
-  BEREIT: "Bereit",
+  IN_VORBEREITUNG: "Stationär",
+  BEREIT: "Bereit zur Entlassung",
   ENTLASSEN: "Entlassen",
 };
 import { notFound } from "next/navigation";
@@ -99,7 +99,7 @@ export default async function PflegePatientPage({ params }: { params: { id: stri
       )}
 
       <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 text-base font-medium tracking-tight text-[#1d1d1f]">
+        <h2 className="mb-6 text-base font-medium tracking-tight text-[#1d1d1f]">
           Schmerz- &amp; Wohlbefindenverlauf (letzte 7 Tage)
         </h2>
         {verlauf.length === 0 && <p className="text-sm text-[#86868b]">Noch keine Check-ins.</p>}
@@ -236,35 +236,53 @@ export default async function PflegePatientPage({ params }: { params: { id: stri
 
       <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
         <h2 className="mb-3 text-base font-medium tracking-tight text-[#1d1d1f]">
-          Dokumentations-Protokoll (revisionssicher)
+          Dokumentations-Protokoll
         </h2>
         {patient.massnahmen.length === 0 && (
           <p className="text-sm text-[#86868b]">Noch keine Maßnahmen dokumentiert.</p>
         )}
         <ul className="grid grid-cols-1 divide-y divide-black/5 lg:grid-cols-2 lg:gap-x-6 lg:divide-y-0">
           {patient.massnahmen.map((m) => {
-            const detail =
-              m.typ === "MEDIKATION"
-                ? m.patientMedication
-                  ? `${m.patientMedication.medication.name} ${m.patientMedication.medication.strength} (${m.patientMedication.dosage})`
-                  : "ein Medikament"
-                : m.patientExercise
-                  ? m.patientExercise.name
-                  : "eine Übung";
+            const isMed = m.typ === "MEDIKATION";
+            const detail = isMed
+              ? m.patientMedication
+                ? `${m.patientMedication.medication.name} ${m.patientMedication.medication.strength} (${m.patientMedication.dosage})`
+                : "ein Medikament"
+              : m.patientExercise
+                ? m.patientExercise.name
+                : "eine Übung";
             return (
-              <li key={m.id} className="py-2 text-sm text-[#86868b]">
-                <span className="font-medium text-[#1d1d1f]">{m.arzt.name}</span> hat{" "}
-                {m.typ === "MEDIKATION" ? (
-                  <>
-                    <span className="font-medium text-[#1d1d1f]">{detail}</span> verabreicht
-                  </>
-                ) : (
-                  <>
-                    die Übung <span className="font-medium text-[#1d1d1f]">{detail}</span> dokumentiert
-                  </>
+              <li key={m.id} className="flex flex-col gap-1 border-l-2 py-2 pl-3 text-sm text-[#86868b]"
+                style={{ borderColor: isMed ? "#0071e3" : "#34c759" }}
+              >
+                <span>
+                  <span className="font-medium text-[#1d1d1f]">{m.arzt.name}</span>{" "}
+                  {isMed ? (
+                    <>
+                      hat{" "}
+                      <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium bg-[#0071e3]/10 text-[#0071e3]`}>
+                        {detail}
+                      </span>{" "}
+                      verabreicht
+                    </>
+                  ) : (
+                    <>
+                      hat Übung{" "}
+                      <span className="rounded-full px-1.5 py-0.5 text-xs font-medium bg-[#34c759]/10 text-[#34c759]">
+                        {detail}
+                      </span>{" "}
+                      dokumentiert
+                    </>
+                  )}
+                </span>
+                {m.kommentar && (
+                  <span className="rounded-lg bg-[#ff9500]/10 px-2 py-1 text-xs font-medium text-[#ff9500]">
+                    💬 {m.kommentar}
+                  </span>
                 )}
-                {m.kommentar ? ` – "${m.kommentar}"` : ""} &middot;{" "}
-                {new Date(m.durchgefuehrtAm).toLocaleString("de-DE")}
+                <span className="text-xs text-[#86868b]">
+                  {new Date(m.durchgefuehrtAm).toLocaleString("de-DE")}
+                </span>
               </li>
             );
           })}

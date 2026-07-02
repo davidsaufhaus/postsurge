@@ -2,13 +2,13 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 const STATUS_STYLE: Record<string, string> = {
-  IN_VORBEREITUNG: "bg-[#86868b]/10 text-[#86868b]",
+  IN_VORBEREITUNG: "bg-[#0071e3]/10 text-[#0071e3]",
   BEREIT: "bg-[#ff9500]/10 text-[#ff9500]",
   ENTLASSEN: "bg-[#34c759]/10 text-[#34c759]",
 };
 const STATUS_LABEL: Record<string, string> = {
-  IN_VORBEREITUNG: "In Vorbereitung",
-  BEREIT: "Bereit",
+  IN_VORBEREITUNG: "Stationär",
+  BEREIT: "Bereit zur Entlassung",
   ENTLASSEN: "Entlassen",
 };
 
