@@ -97,13 +97,14 @@ export async function addPatientMedication(patientId: string, formData: FormData
   const frequency = (formData.get("frequency") as string)?.trim();
   const einnahmezeit = (formData.get("einnahmezeit") as string)?.trim() ?? "";
   const hinweis = (formData.get("hinweis") as string)?.trim();
+  const einnahmenProTag = Math.max(1, Math.min(10, Number(formData.get("einnahmenProTag")) || 1));
 
   if (!medicationId || !dosage || !frequency) {
     return { error: "Medikament, Dosierung und Häufigkeit sind erforderlich." };
   }
 
   await prisma.patientMedication.create({
-    data: { patientId, medicationId, dosage, frequency, einnahmezeit, hinweis: hinweis || null },
+    data: { patientId, medicationId, dosage, frequency, einnahmezeit, hinweis: hinweis || null, einnahmenProTag },
   });
 
   revalidatePath(`/arzt/pflege/${patientId}`);

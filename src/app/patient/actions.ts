@@ -23,11 +23,16 @@ export async function toggleTodo(todoId: string, done: boolean) {
   revalidatePath("/patient");
 }
 
-export async function toggleMedication(medicationId: string, eingenommen: boolean) {
+export async function setMedicineDose(medicationId: string, anzahl: number) {
   const patient = await requirePatient();
-  await prisma.patientMedication.updateMany({
+  const med = await prisma.patientMedication.findFirst({
     where: { id: medicationId, patientId: patient.id },
-    data: { eingenommen },
+  });
+  if (!med) return;
+  const capped = Math.max(0, Math.min(anzahl, med.einnahmenProTag));
+  await prisma.patientMedication.update({
+    where: { id: medicationId },
+    data: { eingenommenAnzahl: capped },
   });
   revalidatePath("/patient/genesungsplan");
 }

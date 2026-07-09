@@ -99,6 +99,10 @@ export function MedicationManageForm({
               <input name="frequency" required placeholder="z.B. 2x täglich" className={inputClass} />
             </div>
             <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-[#86868b]">Einnahmen pro Tag</label>
+              <input name="einnahmenProTag" type="number" min={1} max={10} defaultValue={1} className={inputClass} style={{ width: 70 }} />
+            </div>
+            <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-[#86868b]">Einnahmezeit</label>
               <input name="einnahmezeit" placeholder="morgens/abends" className={inputClass} />
             </div>
