@@ -112,6 +112,19 @@ export async function addPatientMedication(patientId: string, formData: FormData
   return { success: true };
 }
 
+// Arzt aktualisiert die Anzahl der täglichen Einnahmen
+export async function updateMedicationDoses(patientMedicationId: string, einnahmenProTag: number) {
+  await requireDoctor();
+  const med = await prisma.patientMedication.findUnique({ where: { id: patientMedicationId } });
+  if (!med) return;
+  await prisma.patientMedication.update({
+    where: { id: patientMedicationId },
+    data: { einnahmenProTag: Math.max(1, Math.min(10, einnahmenProTag)) },
+  });
+  revalidatePath(`/arzt/pflege/${med.patientId}`);
+  revalidatePath("/patient/genesungsplan");
+}
+
 // Arzt entfernt ein zugewiesenes Medikament wieder
 export async function removePatientMedication(patientId: string, patientMedicationId: string) {
   await requireDoctor();
